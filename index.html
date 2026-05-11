@@ -37,6 +37,25 @@
       // Modify or remove this function to customize the visually presented
       // way that non-critical warnings and error messages are presented to the
       // user.
+      // GitHub Pages / some mobile browsers open /repo without trailing slash; relative "Build/"
+      // then resolves to the wrong host path. Normalize once, then use absolute-from-root paths.
+      (function normalizeProjectBaseUrl() {
+        var path = window.location.pathname;
+        if (path.endsWith("/index.html")) path = path.slice(0, -10);
+        if (path.length > 0 && !path.endsWith("/")) {
+          var q = window.location.search || "";
+          var h = window.location.hash || "";
+          history.replaceState(null, "", window.location.origin + path + "/" + q + h);
+        }
+      })();
+
+      function getRuntimeBasePath() {
+        var path = window.location.pathname;
+        if (path.endsWith("/index.html")) path = path.slice(0, -10);
+        if (!path.endsWith("/")) path += "/";
+        return path;
+      }
+
       function unityShowBanner(msg, type) {
         function updateBannerVisibility() {
           warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
@@ -55,13 +74,14 @@
         updateBannerVisibility();
       }
 
-      var buildUrl = "Build";
+      var basePath = getRuntimeBasePath();
+      var buildUrl = basePath + "Build";
       var loaderUrl = buildUrl + "/ygwenjianjia.loader.js";
       var config = {
         dataUrl: buildUrl + "/ygwenjianjia.data",
         frameworkUrl: buildUrl + "/ygwenjianjia.framework.js",
         codeUrl: buildUrl + "/ygwenjianjia.wasm",
-        streamingAssetsUrl: "StreamingAssets",
+        streamingAssetsUrl: basePath + "StreamingAssets",
         companyName: "DefaultCompany",
         productName: "Jingwei·Carrying Stones to Fill the Hole of Hatred",
         productVersion: "0.1",
@@ -119,6 +139,9 @@
 
       var script = document.createElement("script");
       script.src = loaderUrl;
+      script.onerror = function () {
+        unityShowBanner("无法加载 " + loaderUrl + "。请检查网络或使用 Chrome 打开。", "error");
+      };
       script.onload = () => {
         createUnityInstance(canvas, config, (progress) => {
           progressBarFull.style.width = 100 * progress + "%";
