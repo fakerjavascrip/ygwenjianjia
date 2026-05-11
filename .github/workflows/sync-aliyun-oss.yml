@@ -1,0 +1,80 @@
+# Optional: upload the same static site as GitHub Pages to Aliyun OSS for faster access in China.
+# Setup: add repository secrets (see docs/DEPLOY-CN.md), then run this workflow manually.
+name: Sync site to Aliyun OSS (China)
+
+on:
+  workflow_dispatch:
+    inputs:
+      oss_prefix:
+        description: "OSS prefix, e.g. ygwenjianjia/ — use a single dash - for bucket root (dedicated bucket only)."
+        required: false
+        default: "ygwenjianjia/"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: aliyun-oss-sync
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Assemble site (same layout as GitHub Pages)
+        run: |
+          mkdir -p _site
+          cp index.html dependencies.txt GUID.txt ProjectVersion.txt _site/ 2>/dev/null || true
+          cp -r Build TemplateData StreamingAssets _site/
+          touch _site/.nojekyll
+
+      - name: Validate OSS secrets
+        env:
+          ID: ${{ secrets.ALIYUN_OSS_ACCESS_KEY_ID }}
+          SECRET: ${{ secrets.ALIYUN_OSS_ACCESS_KEY_SECRET }}
+          ENDPOINT: ${{ secrets.ALIYUN_OSS_ENDPOINT }}
+          BUCKET: ${{ secrets.ALIYUN_OSS_BUCKET }}
+        run: |
+          missing=""
+          [ -z "$ID" ] && missing="$missing ALIYUN_OSS_ACCESS_KEY_ID"
+          [ -z "$SECRET" ] && missing="$missing ALIYUN_OSS_ACCESS_KEY_SECRET"
+          [ -z "$ENDPOINT" ] && missing="$missing ALIYUN_OSS_ENDPOINT"
+          [ -z "$BUCKET" ] && missing="$missing ALIYUN_OSS_BUCKET"
+          if [ -n "$missing" ]; then
+            echo "::error::Missing GitHub Actions secrets:$missing — see docs/DEPLOY-CN.md"
+            exit 1
+          fi
+
+      - name: Install ossutil
+        run: |
+          set -e
+          OSSUTIL_VER="1.7.19"
+          curl -fsSL "https://gosspublic.alicdn.com/ossutil/${OSSUTIL_VER}/ossutil-v${OSSUTIL_VER}-linux-amd64.zip" -o ossutil.zip
+          unzip -q ossutil.zip
+          chmod +x "ossutil-v${OSSUTIL_VER}-linux-amd64/ossutil64"
+          sudo mv "ossutil-v${OSSUTIL_VER}-linux-amd64/ossutil64" /usr/local/bin/ossutil64
+
+      - name: Configure ossutil
+        env:
+          ALIYUN_OSS_ACCESS_KEY_ID: ${{ secrets.ALIYUN_OSS_ACCESS_KEY_ID }}
+          ALIYUN_OSS_ACCESS_KEY_SECRET: ${{ secrets.ALIYUN_OSS_ACCESS_KEY_SECRET }}
+          ALIYUN_OSS_ENDPOINT: ${{ secrets.ALIYUN_OSS_ENDPOINT }}
+        run: |
+          ossutil64 config -i "$ALIYUN_OSS_ACCESS_KEY_ID" -k "$ALIYUN_OSS_ACCESS_KEY_SECRET" \
+            -e "$ALIYUN_OSS_ENDPOINT" --language EN
+
+      - name: Sync to OSS
+        env:
+          BUCKET: ${{ secrets.ALIYUN_OSS_BUCKET }}
+        run: |
+          set -euo pipefail
+          PREFIX="${{ github.event.inputs.oss_prefix }}"
+          if [ "$PREFIX" = "-" ] || [ "$PREFIX" = "/" ]; then PREFIX=""; fi
+          if [ -n "$PREFIX" ] && [ "${PREFIX%/}" = "$PREFIX" ]; then PREFIX="${PREFIX}/"; fi
+          DEST="oss://${BUCKET}/${PREFIX}"
+          echo "Syncing _site/ -> ${DEST}"
+          ossutil64 sync _site/ "$DEST" -f --delete

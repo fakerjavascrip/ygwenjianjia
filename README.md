@@ -15,3 +15,7 @@ https://fakerjavascrip.github.io/ygwenjianjia/
 3. 打开 [Actions 列表](https://github.com/fakerjavascrip/ygwenjianjia/actions)，点开最近一次失败的工作流，点击 **Re-run all jobs**。
 
 通过后几分钟内，即可用上面的 `github.io` 链接访问；以后每次推送到 `main` 会自动重新部署。
+
+## 国内访问加速（可选）
+
+`github.io` 在国内可能较慢。可在阿里云 OSS（或腾讯云 COS 等）托管同一套静态文件，详见 **[docs/DEPLOY-CN.md](docs/DEPLOY-CN.md)**；仓库内已提供 **Actions → Sync site to Aliyun OSS (China)** 手动同步工作流（需先在 GitHub 配置文档中的 Secrets）。
