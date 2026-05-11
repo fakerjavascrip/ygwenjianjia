@@ -77,14 +77,15 @@
       var basePath = getRuntimeBasePath();
       var buildUrl = basePath + "Build";
       var loaderUrl = buildUrl + "/ygwenjianjia.loader.js";
-      // Largest asset: hosted on Tencent CloudBase (signed URL; renew in console when expired).
-      // Second link you provided also points to ygwenjianjia.data (alternate signature) — wasm stays on same origin unless you send a ygwenjianjia.wasm URL.
+      // Large assets hosted on Tencent CloudBase (signed URLs; renew when expired).
       var remoteDataUrl =
         "https://636c-cloud1-d6ghy56bs51a0e918-1429453887.tcb.qcloud.la/ygwenjianjia.data?sign=2617afcf7e4f7521caa694c78098ea9b&t=1778484330";
+      var remoteWasmUrl =
+        "https://636c-cloud1-d6ghy56bs51a0e918-1429453887.tcb.qcloud.la/ygwenjianjia.wasm?sign=df0c6edf6bac221e6b2fab9652beafbf&t=1778484878";
       var config = {
         dataUrl: remoteDataUrl,
         frameworkUrl: buildUrl + "/ygwenjianjia.framework.js",
-        codeUrl: buildUrl + "/ygwenjianjia.wasm",
+        codeUrl: remoteWasmUrl,
         streamingAssetsUrl: basePath + "StreamingAssets",
         companyName: "DefaultCompany",
         productName: "Jingwei·Carrying Stones to Fill the Hole of Hatred",
@@ -171,7 +172,12 @@
         tcb.href = "https://636c-cloud1-d6ghy56bs51a0e918-1429453887.tcb.qcloud.la";
         tcb.crossOrigin = "anonymous";
         document.head.appendChild(tcb);
-        add(buildUrl + "/ygwenjianjia.wasm", "fetch");
+        var wPre = document.createElement("link");
+        wPre.rel = "preload";
+        wPre.href = remoteWasmUrl;
+        wPre.as = "fetch";
+        wPre.setAttribute("crossorigin", "anonymous");
+        document.head.appendChild(wPre);
         var dPre = document.createElement("link");
         dPre.rel = "preload";
         dPre.href = remoteDataUrl;
