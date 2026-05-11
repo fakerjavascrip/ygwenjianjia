@@ -137,6 +137,36 @@
 
       loadingBar.style.display = "block";
 
+      // Unity IndexedDB cache (UnityCache) speeds repeat visits; some vendor browsers hang on IDB — skip only there.
+      (function setUnityCachePolicy() {
+        var u = navigator.userAgent || "";
+        window.__unityAvoidIDBCache =
+          /MiuiBrowser|MiBrowser|XiaoMi\/|\sXiaomi\/|HUAWEI|HBPC\/|HonorBrowser|HeyTapBrowser|HeyTap|heytap|OPPOBrowser|VivoBrowser|Quark|\bQQBrowser\/|MQQBrowser|UCBrowser| dingtalk\/|TaobaoBrowser|baidubrowser/i.test(u);
+      })();
+
+      // Hint the browser to warm connections / start large downloads in parallel with loader.js.
+      (function preloadBuildAssets() {
+        var origin = window.location.origin;
+        function abs(p) {
+          return origin + (p.charAt(0) === "/" ? p : "/" + p);
+        }
+        function add(href, as) {
+          var l = document.createElement("link");
+          l.rel = "preload";
+          l.href = abs(href);
+          l.as = as;
+          if (as === "fetch" || as === "script") l.setAttribute("crossorigin", "anonymous");
+          document.head.appendChild(l);
+        }
+        var pc = document.createElement("link");
+        pc.rel = "preconnect";
+        pc.href = origin;
+        document.head.appendChild(pc);
+        add(buildUrl + "/ygwenjianjia.wasm", "fetch");
+        add(buildUrl + "/ygwenjianjia.data", "fetch");
+        add(buildUrl + "/ygwenjianjia.framework.js", "script");
+      })();
+
       var script = document.createElement("script");
       script.src = loaderUrl;
       script.onerror = function () {
