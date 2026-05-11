@@ -77,8 +77,12 @@
       var basePath = getRuntimeBasePath();
       var buildUrl = basePath + "Build";
       var loaderUrl = buildUrl + "/ygwenjianjia.loader.js";
+      // Largest asset: hosted on Tencent CloudBase (signed URL; renew in console when expired).
+      // Second link you provided also points to ygwenjianjia.data (alternate signature) — wasm stays on same origin unless you send a ygwenjianjia.wasm URL.
+      var remoteDataUrl =
+        "https://636c-cloud1-d6ghy56bs51a0e918-1429453887.tcb.qcloud.la/ygwenjianjia.data?sign=2617afcf7e4f7521caa694c78098ea9b&t=1778484330";
       var config = {
-        dataUrl: buildUrl + "/ygwenjianjia.data",
+        dataUrl: remoteDataUrl,
         frameworkUrl: buildUrl + "/ygwenjianjia.framework.js",
         codeUrl: buildUrl + "/ygwenjianjia.wasm",
         streamingAssetsUrl: basePath + "StreamingAssets",
@@ -162,8 +166,18 @@
         pc.rel = "preconnect";
         pc.href = origin;
         document.head.appendChild(pc);
+        var tcb = document.createElement("link");
+        tcb.rel = "preconnect";
+        tcb.href = "https://636c-cloud1-d6ghy56bs51a0e918-1429453887.tcb.qcloud.la";
+        tcb.crossOrigin = "anonymous";
+        document.head.appendChild(tcb);
         add(buildUrl + "/ygwenjianjia.wasm", "fetch");
-        add(buildUrl + "/ygwenjianjia.data", "fetch");
+        var dPre = document.createElement("link");
+        dPre.rel = "preload";
+        dPre.href = remoteDataUrl;
+        dPre.as = "fetch";
+        dPre.setAttribute("crossorigin", "anonymous");
+        document.head.appendChild(dPre);
         add(buildUrl + "/ygwenjianjia.framework.js", "script");
       })();
 
