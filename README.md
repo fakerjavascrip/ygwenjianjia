@@ -19,3 +19,7 @@ https://fakerjavascrip.github.io/ygwenjianjia/
 ## 国内访问加速（可选）
 
 `github.io` 在国内可能较慢。可在阿里云 OSS（或腾讯云 COS 等）托管同一套静态文件，详见 **[docs/DEPLOY-CN.md](docs/DEPLOY-CN.md)**；仓库内已提供 **Actions → Sync site to Aliyun OSS (China)** 手动同步工作流（需先在 GitHub 配置文档中的 Secrets）。
+
+## 腾讯云 EdgeOne Pages
+
+在 EdgeOne 控制台 **导入本 GitHub 仓库** 即可；构建参数已由根目录 **`edgeone.json`** 指定（输出目录 **`dist/`**、WebGL 相关 **HTTP 头**）。详细步骤见 **[docs/DEPLOY-EDGEONE.md](docs/DEPLOY-EDGEONE.md)**。
